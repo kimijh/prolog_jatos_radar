@@ -53,16 +53,16 @@ obter_controles(_, _, _, [0,0,0,0,0,"nenhuma regra aplicada"]).
 % ?- term_string([1,2,"teste",oi], MSG.
 % MSG = "[1,2,\"teste\",oi]".
 
-%================================================================================================
-%====================================== IA Bravely Default ======================================
-%================================================================================================
+%===========================================================================================================
+%====================================== Funcoes Necessárias Para a IA ======================================
+%===========================================================================================================
 
 %funcao de fazer pitagoras para calcular distancias em um plano bidimensional
 %nem tira a raiz quadrada pq n faz diferenca
 pitagoras(DeltaX,DeltaY,Distancia):-
 Distancia is DeltaX*DeltaX+DeltaY*DeltaY.
 
-%================================================================================================
+%===========================================================================================================
 
 %funcao para calcular menor de 2 numeros
 %A é menor
@@ -75,7 +75,24 @@ menor(A,B,MenorNum):-
 B<A,
 MenorNum is B.
 
-%================================================================================================
+%===========================================================================================================
+
+%funcao para calcular menor do absoluto de 2 numeros
+%A é menor
+menorAbs(A,B,MenorNum):-
+AbsA is abs(A),
+AbsB is abs(B),
+AbsA=<AbsB,
+MenorNum is A.
+
+%B é menor
+menorAbs(A,B,MenorNum):-
+AbsA is abs(A),
+AbsB is abs(B),
+AbsB<AbsA,
+MenorNum is B.
+
+%===========================================================================================================
 
 %funcao para calcular distancias toroidais
 distanciaToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,Distancia):-
@@ -89,13 +106,13 @@ menor(DeltaX,DeltaToroidalX,MenorX),
 menor(DeltaY,DeltaToroidalY,MenorY),
 pitagoras(MenorX,MenorY,Distancia).
 
-%================================================================================================
+%===========================================================================================================
 
 %funcao para calcular a distancia toroidal entre o player e um inimigo
 distanciaInimigo(Xplayer,Yplayer,[Xinimigo,Yinimigo],Distancia):-
 distanciaToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,Distancia).
 
-%================================================================================================
+%===========================================================================================================
 
 %funcao para criar uma lista com distancias de todos os inimigos
 %lista não vazia
@@ -107,7 +124,7 @@ listaDistancias(Xplayer,Yplayer,Cauda,DistanciasCauda).
 %lista vazia
 listaDistancias(_,_,[],[]).
 
-%================================================================================================
+%===========================================================================================================
 
 %funcao para achar o aviao mais proximo da lista
 %caso tenha mais de 1 e MenorDaCauda seja menor que MenorDist
@@ -138,13 +155,89 @@ MenorDist is Distancia,
 Xmenor is Xinimigo,
 Ymenor is Yinimigo.
 
-%================================================================================================
+%===========================================================================================================
 
-%funcao para achar angulo entre o player e um inimigo
-acharAnguloRelativo(Xplayer,Yplayer,[[[Xinimigo,Yinimigo],Distancia]],Angulo):-
-DistanciaX is abs(Xplayer-Xinimigo),
-DistanciaY is abs(Yplayer-Yinimigo),
-DistanciaRealX is (Xplayer-Xinimigo),%DistanciaReal será usado para descobrir o quadrante dos graus
-DistanciaRealY is (Yplayer-Yinimigo),
-CosAngulo is (DistanciaX*DistanciaX+DistanciaY*DistanciaY-Distancia*Distancia)/(2*DistanciaX*Distancia),
-Angulo is acos(CosAngulo).
+%funcao para achar a direcao do angunlo, todas as possibilidades, player esta a direita/esquerda e em cima/baixo do inimigo
+%no momento tem 4 delas pra cada possibilidade, refatorar depois pois issso tá muito feio eu quero ser um programador foda
+%DIREITA/CIMA
+deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY):-
+Xplayer>=Xinimigo,
+Yplayer>=Yinimigo,
+ProvisorioX1 is (Xplayer-Xinimigo),
+ProvisorioY1 is (Yplayer-Yinimigo),
+ProvisorioX2 is (-1)*((1024 - Xplayer) + Xinimigo),
+ProvisorioY2 is (-1)*((768-Yplayer)+Yinimigo),
+menorAbs(ProvisorioX1,ProvisorioX2,DeltaX),
+menorAbs(ProvisorioY1,ProvisorioY2,DeltaY).
+
+%DIREITA/BAIXO
+deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY):-
+Xplayer>=Xinimigo,
+Yplayer<Yinimigo,
+ProvisorioX1 is (Xplayer-Xinimigo),
+ProvisorioY1 is (Yplayer-Yinimigo),
+ProvisorioX2 is (-1)*((1024 - Xplayer) + Xinimigo),
+ProvisorioY2 is (768-Yinimigo)+Yplayer,
+menorAbs(ProvisorioX1,ProvisorioX2,DeltaX),
+menorAbs(ProvisorioY1,ProvisorioY2,DeltaY).
+
+%ESQUERDA/CIMA
+deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY):-
+Xplayer<Xinimigo,
+Yplayer>=Yinimigo,
+ProvisorioX1 is (Xplayer-Xinimigo),
+ProvisorioY1 is (Yplayer-Yinimigo),
+ProvisorioX2 is (1024-Xinimigo)+Xplayer,
+ProvisorioY2 is (-1)*((768-Yplayer)+Yinimigo),
+menorAbs(ProvisorioX1,ProvisorioX2,DeltaX),
+menorAbs(ProvisorioY1,ProvisorioY2,DeltaY).
+
+%ESQUERDA/BAIXO
+deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY):-
+Xplayer<Xinimigo,
+Yplayer<Yinimigo,
+ProvisorioX1 is (Xplayer-Xinimigo),
+ProvisorioY1 is (Yplayer-Yinimigo),
+ProvisorioX2 is (1024-Xinimigo)+Xplayer,
+ProvisorioY2 is (768-Yinimigo)+Yplayer,
+menorAbs(ProvisorioX1,ProvisorioX2,DeltaX),
+menorAbs(ProvisorioY1,ProvisorioY2,DeltaY).
+
+%===========================================================================================================
+
+%funcao para normalizar angulos para o padrão do jogo
+%angulo é negativo
+normalizarAngulo(Angulo, AnguloNormalizado):-
+Angulo<0,
+AnguloNormalizado is Angulo + 2*pi.
+
+%angulo é positivo
+normalizarAngulo(Angulo, AnguloNormalizado):-
+Angulo>=0,
+AnguloNormalizado is Angulo.
+
+%===========================================================================================================
+
+%funcao que converte o angulo obtido pelo atan2 para o sistema de angulos do jogo
+calcularAngulo(DeltaX,DeltaY,Angulo):-
+AnguloProvisorio1 is atan2(DeltaY,DeltaX),
+AnguloProvisorio2 is AnguloProvisorio1 + (pi/2),
+normalizarAngulo(AnguloProvisorio2, AnguloNormalizado),
+Angulo is AnguloNormalizado.
+
+%===========================================================================================================
+
+%funcao para obter angulo de um inimigo em relacao ao jogador considerando a arena toroidal
+calcularAnguloInimigo(XPlayer,YPlayer,Xinimigo,Yinimigo,Angulo):-
+deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY),
+calcularAngulo(DeltaX,DeltaY,Angulo).
+
+%===========================================================================================================
+
+%funcao para achar qual o menor giro que o player deve realizar para apontar para o inimigo
+diferencaAngulo(AnguloPlayer,AnguloInimigo,AngMenor):-
+Ang1 is (AnguloInimigo-AnguloPlayer),
+Ang2 is Ang1-(2*pi),
+Ang3 is Ang1+(2*pi),
+menorAbs(Ang1,Ang2,AngMenor1),
+menorAbs(AngMenor1,Ang3,AngMenor).
