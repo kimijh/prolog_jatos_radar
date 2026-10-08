@@ -158,7 +158,7 @@ Ymenor is Yinimigo.
 %===========================================================================================================
 
 %funcao para achar a direcao do angunlo, todas as possibilidades, player esta a direita/esquerda e em cima/baixo do inimigo
-%no momento tem 4 delas pra cada possibilidade, refatorar depois pois issso tá muito feio eu quero ser um programador foda
+%no momento tem 4 delas pra cada possibilidade, refatorar depois pois isso tá muito feio eu quero ser um programador foda
 %DIREITA/CIMA
 deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY):-
 Xplayer>=Xinimigo,
@@ -228,7 +228,7 @@ Angulo is AnguloNormalizado.
 %===========================================================================================================
 
 %funcao para obter angulo de um inimigo em relacao ao jogador considerando a arena toroidal
-calcularAnguloInimigo(XPlayer,YPlayer,Xinimigo,Yinimigo,Angulo):-
+calcularAnguloInimigo(Xplayer,Yplayer,Xinimigo,Yinimigo,Angulo):-
 deslocamentoToroidal(Xplayer,Yplayer,Xinimigo,Yinimigo,DeltaX,DeltaY),
 calcularAngulo(DeltaX,DeltaY,Angulo).
 
@@ -241,3 +241,70 @@ Ang2 is Ang1-(2*pi),
 Ang3 is Ang1+(2*pi),
 menorAbs(Ang1,Ang2,AngMenor1),
 menorAbs(AngMenor1,Ang3,AngMenor).
+
+%===========================================================================================================
+
+%funcao para descobrir como atualizar o angulo
+%D>0 aumenta o angulo -> LEFT
+%D<0 diminui o angulo -> RIGHT
+%D==0 faz nada
+%Diferenca>0
+direcaoAngulo(Diferenca,Direcao):-
+Diferenca>0,
+Direcao="LEFT".
+%Diferenca<0
+direcaoAngulo(Diferenca,Direcao):-
+Diferenca<0,
+Direcao="RIGHT".
+%Diferenca=0
+direcaoAngulo(Diferenca,Direcao):-
+Diferenca=:=0,
+Direcao="NONE".
+
+%===========================================================================================================
+
+%funcao para decidir como atualizar o angulo
+%Direcao=LEFT
+decideDirecao(Direcao,LEFT,RIGHT):-
+Direcao="LEFT",
+LEFT is 1,
+RIGHT is 0.
+%Direcao=RIGHT
+decideDirecao(Direcao,LEFT,RIGHT):-
+Direcao="RIGHT",
+LEFT is 0,
+RIGHT is 1.
+%Direcao=NONE
+decideDirecao(Direcao,LEFT,RIGHT):-
+Direcao="NONE",
+LEFT is 0,
+RIGHT is 0.
+
+%===========================================================================================================
+
+%funcao que encontra o inimigo mais proximo e retorna sua posicao, distancia e angulo
+analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo):-
+listaDistancias(Xplayer,Yplayer,ListaInimigos,Distancias),
+acharMaisProx(Distancias,MenorDist,Xmenor,Ymenor),
+calcularAnguloInimigo(Xplayer,Yplayer,Xmenor,Ymenor,Angulo).
+
+%===========================================================================================================
+
+%funcao que decide o que fazer com o inimigo mais proximo dependendo do estado atual do player, BRAVE ou DEFAULT
+%caso esteja no estado BRAVE e esteja perto o suficiente para um tiro certeiro
+lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT):-
+BOOM is 1,
+EstadoPlayer="BRAVE",
+analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo),
+diferencaAngulo(AnguloPlayer,Angulo,AngMenor),
+direcaoAngulo(AngMenor,Direcao),
+decideDirecao(Direcao,LEFT,RIGHT).
+
+%caso esteja no estado DEFAULT
+lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT,BOOM):-
+BOOM is 1,
+EstadoPlayer="DEFAULT",
+analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo),
+diferencaAngulo(AnguloPlayer,Angulo,AngMenor),
+direcaoAngulo(AngMenor,Direcao),
+decideDirecao(Direcao,RIGHT,LEFT).%RIGHT e LEFT trocados pq queremos virar para longe do inimigo, nao exatamente pro oposto, só manter distancia
