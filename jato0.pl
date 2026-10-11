@@ -29,21 +29,15 @@ troca(1, 0).
 % [FORWARD, REVERSE, LEFT, RIGHT, BOOM, MSG]
 obter_controles(INFORMACAO, ADVERSARIOS, MISSEIS, CONTROLES) :-
     INFORMACAO = [X, Y, ANGLE, SCORE, SPEED],
-    CONTROLES = [FORWARD, REVERSE, LEFT, RIGHT, BOOM, MSG],
-    random_between(0,1,AA),
-    troca(AA, BB),
-    random_between(0,1,CC),
-    FORWARD is AA,
+    contaInimigos(ADVERSARIOS, QntsVivos),
+    defineEstado(QntsVivos, EstadoPlayer, MSG),
+    lidarComInimigoMaisProx(
+        EstadoPlayer, X, Y, ANGLE, ADVERSARIOS,
+        Xmenor, Ymenor, MenorDist, Angulo, LEFT, RIGHT, BOOM
+    ),
+    FORWARD is 1,
     REVERSE is 0,
-    LEFT is AA,
-    RIGHT is BB,
-    BOOM is CC,
-    MSG = "Regra padrao aplicada".
-    %opcao:
-    %term_string([ADVERSARIOS| [MISSEIS]], MSG).
-
-% Para evitar erros, o jato para:
-obter_controles(_, _, _, [0,0,0,0,0,"nenhuma regra aplicada"]).
+    CONTROLES = [FORWARD, REVERSE, LEFT, RIGHT, BOOM, MSG].
 
 % Dica:
 % Você pode transformar um vetor com qualquer coisa para string assim:
@@ -58,9 +52,8 @@ obter_controles(_, _, _, [0,0,0,0,0,"nenhuma regra aplicada"]).
 %===========================================================================================================
 
 %funcao de fazer pitagoras para calcular distancias em um plano bidimensional
-%nem tira a raiz quadrada pq n faz diferenca
 pitagoras(DeltaX,DeltaY,Distancia):-
-Distancia is DeltaX*DeltaX+DeltaY*DeltaY.
+Distancia is sqrt(DeltaX*DeltaX+DeltaY*DeltaY).
 
 %===========================================================================================================
 
@@ -290,20 +283,58 @@ calcularAnguloInimigo(Xplayer,Yplayer,Xmenor,Ymenor,Angulo).
 
 %===========================================================================================================
 
+%funcao que determina qual estado o player deve estar, estado é o que controla seu comportamento
+%dois vivos ou menos, fica BRAVE
+defineEstado(QntsVivos,EstadoPlayer,MSG):-
+QntsVivos=<2,
+MSG = "Estou BRAVE!",
+EstadoPlayer = "BRAVE".
+
+%mais de dois vivos, fica DEFAULT
+defineEstado(QntsVivos,EstadoPlayer,MSG):-
+QntsVivos>2,
+MSG = "Estou DEFAULT...",
+EstadoPlayer = "DEFAULT".
+
+%===========================================================================================================
+
+%funcao que conta quantos inimigos estao vivos atualmente
+%tem proxima casa
+contaInimigos([Cabeca|Cauda],QntsVivos):-
+contaInimigos(Cauda,ContadorLocal),
+QntsVivos is ContadorLocal + 1.
+
+%nao tem proxima casa, lista chegou ao fim
+contaInimigos([],QntsVivos):-
+QntsVivos is 0.
+
+%===========================================================================================================
+
 %funcao que decide o que fazer com o inimigo mais proximo dependendo do estado atual do player, BRAVE ou DEFAULT
 %caso esteja no estado BRAVE e esteja perto o suficiente para um tiro certeiro
-lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT):-
-BOOM is 1,
+lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT,BOOM):-
 EstadoPlayer="BRAVE",
 analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo),
+MenorDist<=100,
+BOOM is 1,
+diferencaAngulo(AnguloPlayer,Angulo,AngMenor),
+direcaoAngulo(AngMenor,Direcao),
+decideDirecao(Direcao,LEFT,RIGHT).
+
+%caso esteja no estado BRAVE porém nao perto o suficiente
+lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT,BOOM):-
+EstadoPlayer="BRAVE",
+analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo),
+MenorDist>100,
+BOOM is 0,
 diferencaAngulo(AnguloPlayer,Angulo,AngMenor),
 direcaoAngulo(AngMenor,Direcao),
 decideDirecao(Direcao,LEFT,RIGHT).
 
 %caso esteja no estado DEFAULT
 lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT,BOOM):-
-BOOM is 1,
 EstadoPlayer="DEFAULT",
+BOOM is 1,
 analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo),
 diferencaAngulo(AnguloPlayer,Angulo,AngMenor),
 direcaoAngulo(AngMenor,Direcao),
