@@ -315,7 +315,7 @@ QntsVivos is 0.
 lidarComInimigoMaisProx(EstadoPlayer,Xplayer,Yplayer,AnguloPlayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo,LEFT,RIGHT,BOOM):-
 EstadoPlayer="BRAVE",
 analisarInimigoMaisProx(Xplayer,Yplayer,ListaInimigos,Xmenor,Ymenor,MenorDist,Angulo),
-MenorDist<=100,
+MenorDist=<100, %<-linha 318
 BOOM is 1,
 diferencaAngulo(AnguloPlayer,Angulo,AngMenor),
 direcaoAngulo(AngMenor,Direcao),

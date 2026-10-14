@@ -1,8 +1,8 @@
 
 //////////// MODIFIQUE AQUI:
 const dummyJets=5; // quantidade de jatos aleatórios
-const keysJet=true; // modifique para ter um jato controlado pelo teclado
-const prologJets=[]; // jatos prolog
+const keysJet=false; // modifique para ter um jato controlado pelo teclado
+const prologJets=["Ringabel"]; // jatos prolog
 
 // Se quiser adicionar jatos prolog, faça assim:
 //prologJets.push("Ligerin");
